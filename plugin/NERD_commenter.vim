@@ -1476,47 +1476,8 @@ function s:PlaceDelimitersAndInsBetween()
     " get the left and right delimiters without any escape chars in them
     let left = s:Left({'space': 1})
     let right = s:Right({'space': 1})
-
-    let theLine = getline('.')
-    let lineHasLeadTabs = s:HasLeadingTabs(theLine) || (theLine =~# '^ *$' && !&expandtab)
-
-    "convert tabs to spaces and adjust the cursors column to take this into
-    "account
-    let untabbedCol = s:UntabbedCol(theLine, col('.'))
-    call setline(line('.'), s:ConvertLeadingTabsToSpaces(theLine))
-    call cursor(line('.'), untabbedCol)
-
-    " get the length of the right delimiter
-    let lenRight = strlen(right)
-
-    let isDelimOnEOL = col('.') >= strlen(getline('.'))
-
-    " if the cursor is in the first col then we gotta insert rather than
-    " append the comment delimiters here
-    let insOrApp = (col('.')==1 ? 'i' : 'a')
-
-    " place the delimiters down. We do it differently depending on whether
-    " there is a left AND right delimiter
-    if lenRight > 0
-        execute ':normal! ' . insOrApp . left . right
-        execute ':normal! ' . lenRight . 'h'
-    else
-        execute ':normal! ' . insOrApp . left
-    endif
-
-    "if needed convert spaces back to tabs and adjust the cursors col
-    "accordingly
-    if lineHasLeadTabs
-        let tabbedCol = s:TabbedCol(getline('.'), col('.'))
-        call setline(line('.'), s:ConvertLeadingSpacesToTabs(getline('.')))
-        call cursor(line('.'), tabbedCol)
-    endif
-
-    if isDelimOnEOL && lenRight ==# 0
-        startinsert!
-    else
-        call feedkeys('a', 'ni')
-    endif
+    " insert the delimiters and adjust the cursor
+    call feedkeys(left . right . repeat("\<Left>", strchars(right)), 'ni')
 endfunction
 
 " Function: s:RemoveDelimiters(left, right, line)
@@ -3198,7 +3159,7 @@ call s:CreateMaps('i',  'Insert',     'Insert Comment Here', '')
 call s:CreateMaps('',   ':',          '-Sep3-', '')
 call s:CreateMaps('',   ':help NERDCommenterContents<CR>', 'Help', '')
 
-inoremap <silent> <plug>NERDCommenterInsert <SPACE><BS><ESC>:call NERDComment('i', 'insert')<CR>
+inoremap <silent> <plug>NERDCommenterInsert <C-\><C-O>:call NERDComment('i', 'insert')<CR>
 
 " switch to/from alternative delimiters (does not use wrapper function)
 nnoremap <plug>NERDCommenterAltDelims :call <SID>SwitchToAlternativeDelimiters(1)<cr>
